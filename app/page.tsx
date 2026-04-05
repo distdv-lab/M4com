@@ -1,54 +1,49 @@
+import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
 
-async function checkSupabase(): Promise<{ label: string; tone: "ok" | "warn" | "err" }> {
+async function supabaseLine(): Promise<string> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
   if (!url?.trim() || !key?.trim()) {
-    return {
-      label:
-        "Faltan NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY. Cópialas desde .env.example a .env.local o en Vercel → Settings → Environment Variables.",
-      tone: "warn",
-    };
+    return "Supabase: configura NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY.";
   }
-
   const supabase = createClient(url, key);
   const { error } = await supabase.auth.getSession();
-
-  if (error) {
-    return {
-      label: `Supabase respondió con error: ${error.message}. Revisa URL y clave anon en el dashboard de Supabase.`,
-      tone: "err",
-    };
-  }
-
-  return {
-    label:
-      "Conexión a Supabase correcta (el proyecto Auth respondió con la clave anon). GitHub → Vercel → variables → esta página lo confirma en producción.",
-    tone: "ok",
-  };
+  if (error) return `Supabase: error — ${error.message}`;
+  return "Supabase: conexión correcta.";
 }
 
 export default async function Home() {
-  const supabaseStatus = await checkSupabase();
+  const line = await supabaseLine();
 
   return (
-    <main>
-      <h1>Hola mundo</h1>
-      <p className="lead">
-        Si ves esto en la URL de Vercel, el flujo <strong>GitHub → deploy</strong> funciona. El recuadro de abajo
-        comprueba <strong>Supabase</strong> con las variables públicas.
-      </p>
-      <div className="card">
-        <h2>Estado Supabase</h2>
-        <p className={`status ${supabaseStatus.tone}`}>{supabaseStatus.label}</p>
+    <>
+      <h1>M4com</h1>
+      <p className="lead">Inventario: compras, recepción física con fotos y seguimiento por etapa.</p>
+
+      <div className="home-actions">
+        <Link href="/inventario/nueva" className="btn btn-primary">
+          Nueva compra
+        </Link>
+        <Link href="/inventario" className="btn btn-secondary">
+          Ver inventario
+        </Link>
       </div>
-      <p className="lead" style={{ marginTop: "2rem", fontSize: "0.9rem" }}>
-        Local: crea <code>.env.local</code> con los mismos nombres que <code>.env.example</code> y ejecuta{" "}
-        <code>npm run dev</code>.
-      </p>
-    </main>
+
+      <div className="card" style={{ marginTop: "2rem" }}>
+        <h2>Paso 1</h2>
+        <p className="status ok" style={{ margin: 0 }}>
+          Captura de compra (ID automático, ficha técnica) y reporte de recepción (estado físico, comentarios,
+          fotografías).
+        </p>
+        <p className="lead" style={{ marginTop: "1rem", marginBottom: 0, fontSize: "0.9rem" }}>
+          Primera vez: en Supabase ejecuta el SQL <code>supabase/migrations/001_inventario_paso1.sql</code>.
+        </p>
+      </div>
+
+      <p className="meta-footer">{line}</p>
+    </>
   );
 }
